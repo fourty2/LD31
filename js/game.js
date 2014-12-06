@@ -1,12 +1,13 @@
 /**
  todos:
+ 	* player character creation // .. 23?
+
+ 	day2: (10)
+ 	* road/ way to head of snowman part 2
 
  	* mouse view / third person camera // 19
  	* jump	// 19:30
 
- 	day2: (10)
- 	* road/ way to head of snowman part 2
- 	* player character creation // .. 23?
  	* enemies (little snowmen?) // pathes?
  	* name/ title
  	* assets and animations
@@ -159,8 +160,8 @@ var ld31 = {
 			ld31.snowman = new THREE.Mesh(geometry,
 						new THREE.MeshFaceMaterial(materials)
 				);
-			//ld31.snowman.receiveShadow = true;
-			//ld31.snowman.castShadow = true;
+			ld31.snowman.receiveShadow = true;
+			ld31.snowman.castShadow = true;
 			ld31.snowman.rotation.y = Math.PI/2;
 			ld31.snowman.position.set(-60,45,-70);
 			ld31.snowman.scale.set(35,35,35);
@@ -183,7 +184,7 @@ var ld31 = {
         light.shadowDarkness = 0.6;
         light.shadowMapWidth = 4048;
         light.shadowMapHeight = 4048;
-      //  light.shadowCameraVisible = true;
+       //light.shadowCameraVisible = true;
 		this.scene.add(light);
 
 
