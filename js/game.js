@@ -1,9 +1,17 @@
 /**
  todos:
- 	* keyboard input
- 	* mouse view
- 	* road/ way to head of snowman
- 	* 
+
+ 	* mouse view / third person camera // 19
+ 	* jump	// 19:30
+
+ 	day2: (10)
+ 	* road/ way to head of snowman part 2
+ 	* player character creation // .. 23?
+ 	* enemies (little snowmen?) // pathes?
+ 	* name/ title
+ 	* assets and animations
+ 	* music / sounds
+ 	* intro screen
  */
 
 var ld31 = {
@@ -45,16 +53,20 @@ var ld31 = {
 		this.renderer.setSize(WIDTH, HEIGHT);
 		this.renderer.shadowMapEnabled = true;
 		this.renderer.shadowMapSoft = true;		
+		this.renderer.setClearColor(0x001020, 1);
 
 		this.scene = new THREE.Scene();
 
 		// init camera
 		this.camera = new THREE.PerspectiveCamera(FOV, WIDTH/ HEIGHT, NEAR, FAR);
-	    this.camera.position.set(-50, 150, 300 );
+	    this.camera.position.set(0, 20, 250 );
+
 
 		//this.scene
 		var light = new THREE.AmbientLight( 0x606060 ); // soft white light
 		this.scene.add( light );
+
+		window.addEventListener('resize', ld31.onWindowResize, false);
 
 
 		this.initWorld();
@@ -65,6 +77,12 @@ var ld31 = {
 
 
 		this.animate();
+	},
+	onWindowResize: function() {
+		ld31.camera.aspect = window.innerWidth / window.innerHeight;
+		ld31.camera.updateProjectionMatrix();
+		ld31.renderer.setSize(window.innerWidth, window.innerHeight);
+
 	},
 	kbInputDown: function(e) {
 		index = [ld31.keys.UP,ld31.keys.DOWN,ld31.keys.LEFT,ld31.keys.RIGHT,ld31.keys.W,ld31.keys.A,ld31.keys.S,ld31.keys.D].indexOf(e.keyCode);
@@ -90,13 +108,15 @@ var ld31 = {
 
 
 			this.player = new THREE.Mesh(
-				new THREE.SphereGeometry(3,5,5),
+				new THREE.SphereGeometry(1,5,5),
 				new THREE.MeshLambertMaterial({color: 0x00ff00, shading: THREE.FlatShading})
 				);
 
 			this.player.castShadow = true;
 			this.player.receiveShadow = true;
+			//this.player.add(this.camera);
 			this.scene.add(this.player);
+
 
 			// reset position
 			this.motion.position.set(20,100,0);
@@ -133,15 +153,16 @@ var ld31 = {
 			geometry.center();
 			for (var i = 0; i< materials.length; i++) {
 				materials[i].shading = THREE.FlatShading;
+				//materials[i].side = THREE.DoubleSide;
 			}
 
 			ld31.snowman = new THREE.Mesh(geometry,
-					new THREE.MeshLambertMaterial({color: 0xffffff, shading: THREE.FlatShading})
+						new THREE.MeshFaceMaterial(materials)
 				);
-			ld31.snowman.receiveShadow = true;
-			ld31.snowman.castShadow = true;
+			//ld31.snowman.receiveShadow = true;
+			//ld31.snowman.castShadow = true;
 			ld31.snowman.rotation.y = Math.PI/2;
-			ld31.snowman.position.set(-50,10,-70);
+			ld31.snowman.position.set(-60,45,-70);
 			ld31.snowman.scale.set(35,35,35);
 			ld31.scene.add(ld31.snowman);
 
@@ -179,13 +200,15 @@ var ld31 = {
 			ld31.movePlayer();
 
 			ld31.applyPhysics();
+			//this.camera.lookAt(ld31.player.position);
+			this.camera.updateMatrix();
 			ld31.player.position.copy(ld31.motion.position);
 
-			this.camera.position.x = ld31.player.position.x + 10;
+			/*this.camera.position.x = ld31.player.position.x + 10;
 			this.camera.position.y = ld31.player.position.y + 1;
 			this.camera.position.z = ld31.player.position.z + 30;
-
-			this.camera.lookAt(ld31.snowman.position);
+			*/
+			
 	//		console.log(ld31.motion.position);
 
 			//ld31.updateCamera();
@@ -249,9 +272,9 @@ var ld31 = {
 
 			if (hits.length > 0 && hits[0].face.normal.y > 0) {
 				var actualHeight = hits[0].distance - 100;
-				if ((ld31.motion.velocity.y <=0) && Math.abs(actualHeight) < 3)
+				if ((ld31.motion.velocity.y <=0) && Math.abs(actualHeight) < 1.5)
 				{
-					ld31.motion.position.y -= actualHeight -3 ;
+					ld31.motion.position.y -= actualHeight -1 ;
 					ld31.motion.velocity.y = 0;
 					ld31.motion.airborne = false;
 				}
