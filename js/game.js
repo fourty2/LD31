@@ -32,15 +32,25 @@ var ld31 = {
 	},
 	initWorld: function() {
 
-		
+
 
 		var sphere = new THREE.SphereGeometry(10, 32, 32);
 		//var plane = new THREE.PlaneGeometry(25, 25, 1,1);
+		var loader = new THREE.JSONLoader();
 
-		var mesh =  new THREE.Mesh(sphere,
-						new THREE.MeshLambertMaterial({color: 0xff0000})
-						);
-		this.scene.add(mesh);
+		loader.load('models/sphere.json', function(geometry, materials) {
+
+			var newMesh = new THREE.Mesh(geometry, 	new THREE.MeshLambertMaterial({color: 0xff0000, shading: THREE.FlatShading}));
+			newMesh.scale.set(10,10,10);
+			ld31.scene.add(newMesh);
+			ld31.camera.lookAt(newMesh.position);
+
+		});
+
+	//	var mesh =  new THREE.Mesh(sphere,
+	//					new THREE.MeshLambertMaterial({color: 0xff0000})
+	//					);
+	//	this.scene.add(mesh);
 
 
 
@@ -51,7 +61,7 @@ var ld31 = {
 		this.scene.add(light);
 
 	
-		this.camera.lookAt(mesh.position);
+		
 
 	},
 	// render stuff
