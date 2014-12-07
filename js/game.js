@@ -1,16 +1,19 @@
 /**
  todos:
- 	* player character creation // .. 23?
+ 	day2:
 
- 	day2: (10)
+ 	* finish player character
+
+	* refine mouse view / third person camera 
+
  	* road/ way to head of snowman part 2
-
- 	* mouse view / third person camera // 19
- 	* jump	// 19:30
-
+	* fog
+ 	
  	* enemies (little snowmen?) // pathes?
  	* name/ title
- 	* assets and animations
+ 	* assets and animations (e.a.moving arms/ heads of snowman)
+	* particle/ special effects
+
  	* music / sounds
  	* intro screen
  */
@@ -20,7 +23,10 @@ var ld31 = {
 	renderer: null,
 	scene: null,
 	camera: null,
+	camerControls: null,
 	player: null,
+	lookAround: false,
+	clock: null,
 	motion: {
 		position: new THREE.Vector3(),
 		velocity: new THREE.Vector3(),
@@ -54,13 +60,21 @@ var ld31 = {
 		this.renderer.setSize(WIDTH, HEIGHT);
 		this.renderer.shadowMapEnabled = true;
 		this.renderer.shadowMapSoft = true;		
-		this.renderer.setClearColor(0x001020, 1);
+		this.renderer.setClearColor(0xffffff, 1);
 
 		this.scene = new THREE.Scene();
 
 		// init camera
 		this.camera = new THREE.PerspectiveCamera(FOV, WIDTH/ HEIGHT, NEAR, FAR);
-	    this.camera.position.set(0, 20, 250 );
+	    //this.camera.position.set(0, 20, 250 );
+	    this.scene.add(this.camera);
+
+	    this.cameraControls = new THREE.OrbitControls(this.camera);
+	    this.cameraControls.userPan = false;
+
+	    this.clock = new THREE.Clock();
+
+	    this.scene.fog = new THREE.FogExp2(0xffffff, 0.004);
 
 
 		//this.scene
@@ -68,7 +82,7 @@ var ld31 = {
 		this.scene.add( light );
 
 		window.addEventListener('resize', ld31.onWindowResize, false);
-
+		document.addEventListener('mousedown', ld31.onMouseDown, false);
 
 		this.initWorld();
 		this.initPlayer();
@@ -85,8 +99,18 @@ var ld31 = {
 		ld31.renderer.setSize(window.innerWidth, window.innerHeight);
 
 	},
+	onMouseDown: function(e) {
+		e.preventDefault();
+		ld31.lookAround = true;
+		ld31.cameraControls.center.copy(ld31.player.position);
+		document.addEventListener('mouseup', ld31.onMouseUp, false);
+	},
+	onMouseUp: function(e) {
+		ld31.lookAround = false;
+		document.removeEventListener('mouseup', ld31.onMouseUp);
+	},
 	kbInputDown: function(e) {
-		index = [ld31.keys.UP,ld31.keys.DOWN,ld31.keys.LEFT,ld31.keys.RIGHT,ld31.keys.W,ld31.keys.A,ld31.keys.S,ld31.keys.D].indexOf(e.keyCode);
+		index = [ld31.keys.SPACE,ld31.keys.UP,ld31.keys.DOWN,ld31.keys.LEFT,ld31.keys.RIGHT,ld31.keys.W,ld31.keys.A,ld31.keys.S,ld31.keys.D].indexOf(e.keyCode);
 		if (index >= 0) {
 			ld31.pressed[e.keyCode] = true;
 			e.preventDefault();
@@ -95,33 +119,42 @@ var ld31 = {
 
 	},
 	kbInputUp: function(e) {
-		index = [ld31.keys.UP,ld31.keys.DOWN,ld31.keys.LEFT,ld31.keys.RIGHT,ld31.keys.W,ld31.keys.A,ld31.keys.S,ld31.keys.D].indexOf(e.keyCode);
+		index = [ld31.keys.SPACE,ld31.keys.UP,ld31.keys.DOWN,ld31.keys.LEFT,ld31.keys.RIGHT,ld31.keys.W,ld31.keys.A,ld31.keys.S,ld31.keys.D].indexOf(e.keyCode);
 		if (index >= 0) {
 			ld31.pressed[e.keyCode] = false;
 			e.preventDefault();
 		}
 	},
 	initPlayer: function() {
-			// get keyboard input 
+		// get keyboard input 
 
-			window.addEventListener("keydown", ld31.kbInputDown, false);
-			window.addEventListener("keyup", ld31.kbInputUp, false);
+		window.addEventListener("keydown", ld31.kbInputDown, false);
+		window.addEventListener("keyup", ld31.kbInputUp, false);
 
+		var loader = new THREE.JSONLoader();
+		loader.load('models/santa.json', function(geometry, materials) {
+			geometry.center();
+			for (var i = 0; i< materials.length; i++) {
+				materials[i].shading = THREE.FlatShading;
+			}
 
-			this.player = new THREE.Mesh(
-				new THREE.SphereGeometry(1,5,5),
+			ld31.player = new THREE.Mesh(
+				geometry,
 				new THREE.MeshLambertMaterial({color: 0x00ff00, shading: THREE.FlatShading})
-				);
-
-			this.player.castShadow = true;
-			this.player.receiveShadow = true;
+			);
+			//ld31.player.scale.set(2,2,2);
+			ld31.player.castShadow = true;
+			ld31.player.receiveShadow = true;
 			//this.player.add(this.camera);
-			this.scene.add(this.player);
+			ld31.scene.add(ld31.player);
 
 
 			// reset position
-			this.motion.position.set(20,100,0);
-			this.motion.velocity.multiplyScalar(0);
+			ld31.motion.position.set(-80,15,80);
+			ld31.motion.velocity.multiplyScalar(0);
+
+
+		});
 
 
 	},
@@ -162,8 +195,8 @@ var ld31 = {
 				);
 			ld31.snowman.receiveShadow = true;
 			ld31.snowman.castShadow = true;
-			ld31.snowman.rotation.y = Math.PI/2;
-			ld31.snowman.position.set(-60,45,-70);
+			ld31.snowman.rotation.y = -Math.PI/2;
+			ld31.snowman.position.set(-100,45,-60);
 			ld31.snowman.scale.set(35,35,35);
 			ld31.scene.add(ld31.snowman);
 
@@ -201,8 +234,8 @@ var ld31 = {
 			ld31.movePlayer();
 
 			ld31.applyPhysics();
-			//this.camera.lookAt(ld31.player.position);
-			this.camera.updateMatrix();
+		//	ld31.camera.lookAt(ld31.player.position);
+			ld31.camera.updateMatrix();
 			ld31.player.position.copy(ld31.motion.position);
 
 			/*this.camera.position.x = ld31.player.position.x + 10;
@@ -220,40 +253,69 @@ var ld31 = {
 	},
 	movePlayer: function() {
 		var forward = new THREE.Vector3();
-		var sideways = new THREE.Vector3();
+		var delta = ld31.clock.getDelta();
+  		var rotateAngle = Math.PI / 2 * delta; 
+
+//		var sideways = new THREE.Vector3();
 		// calculate x and y steps for current rotation
-		forward.set( Math.sin( ld31.motion.rotation.y ), 0, Math.cos( ld31.motion.rotation.y ) );
-		sideways.set( forward.z, 0, -forward.x );
+		forward.set( Math.sin( ld31.player.rotation.y ), 0, Math.cos( ld31.player.rotation.y ) );
+//		sideways.set( forward.z, 0, -forward.x );
+
+		TWEEN.update();
+		ld31.cameraControls.update();
+
 
 		if (ld31.pressed[ld31.keys.UP] || ld31.pressed[ld31.keys.W]) {
-			forward.multiplyScalar( -0.1 );
+			forward.multiplyScalar( -0.2 );
 		} 
 		else if (ld31.pressed[ld31.keys.DOWN] || ld31.pressed[ld31.keys.S]) {
-			forward.multiplyScalar( 0.1 );
+			forward.multiplyScalar( 0.2 );
 		}
 		else {
-	
 			forward.multiplyScalar( 0 );
 		}
 
+		if (ld31.pressed[ld31.keys.SPACE] && !ld31.motion.airborne) {
+			ld31.motion.airborne = true;
+			forward.y = 0.3;
+		}
+
+
+		var relativeCameraOffset = new THREE.Vector3(0, 6, 20);
+		// hard version ;)
+//		var relativeCameraOffset = new THREE.Vector3(0, 60, 200);
+
+		var cameraOffset = relativeCameraOffset.applyMatrix4(ld31.player.matrixWorld);
+		// Camera TWEEN.
+		if (!ld31.lookAround) {
+			new TWEEN.Tween( ld31.camera.position ).to( {
+			  x: cameraOffset.x,
+			  y: cameraOffset.y,
+			  z: cameraOffset.z }, 90 )
+			.interpolation( TWEEN.Interpolation.Bezier )
+			.easing( TWEEN.Easing.Sinusoidal.InOut ).start();
+
+			ld31.camera.lookAt( ld31.player.position );
+		}
+
 		if (ld31.pressed[ld31.keys.LEFT] || ld31.pressed[ld31.keys.A]) {
-			sideways.multiplyScalar( -0.1 );
+        	ld31.player.rotateY(rotateAngle);
 		} 
 		else if (ld31.pressed[ld31.keys.RIGHT] || ld31.pressed[ld31.keys.D]) {
-			sideways.multiplyScalar( 0.1 );
-		}
-		else {
-			
-			sideways.multiplyScalar( 0 );
+	       	ld31.player.rotateY(-rotateAngle);
 		}
 
 
 
-		var combined = forward.add( sideways );
+
+
+		var combined = forward; //.add( sideways );
 		if( Math.abs( combined.x ) >= Math.abs( ld31.motion.velocity.x ) ) ld31.motion.velocity.x = combined.x;
 		if( Math.abs( combined.y ) >= Math.abs( ld31.motion.velocity.y ) ) ld31.motion.velocity.y = combined.y;
-		if( Math.abs( combined.z ) >= Math.abs( ld31.motion.velocity.z ) ) ld31.motion.velocity.z = combined.z;
-
+		if( Math.abs( combined.z ) >= Math.abs( ld31.motion.velocity.z ) ) {
+			ld31.motion.velocity.z = combined.z;
+		}
+	
 
 	},
 
@@ -263,28 +325,48 @@ var ld31 = {
 		ld31.displacement = new THREE.Vector3();
 	},
 	applyPhysics: function() {
-		if (ld31.world) {
+		if (ld31.world && ld31.snowman) {
 			ld31.raycaster.ray.origin.copy(ld31.motion.position);
-			ld31.raycaster.ray.origin.y += 100; //birdsEye; // 
+			ld31.raycaster.ray.origin.y += 15; //birdsEye; // 
 
 			var gravity = 0.01;
-			var hits = ld31.raycaster.intersectObject(this.world);
-			ld31.motion.airborne = true;
+			var damping = 0.93;
+			var time = 0.3;
+			var hits = ld31.raycaster.intersectObject(ld31.world);
+			var smhits = ld31.raycaster.intersectObject(ld31.snowman);
 
-			if (hits.length > 0 && hits[0].face.normal.y > 0) {
-				var actualHeight = hits[0].distance - 100;
+			ld31.motion.airborne = true;
+			if (smhits.length > 0 && smhits[0].face.normal.y > 0) {
+				var actualHeight = smhits[0].distance - 15;
 				if ((ld31.motion.velocity.y <=0) && Math.abs(actualHeight) < 1.5)
 				{
-					ld31.motion.position.y -= actualHeight -1 ;
+					ld31.motion.position.y -= actualHeight -1.2 ;
+					ld31.motion.velocity.y = 0;
+					ld31.motion.airborne = false;
+				}
+
+			}
+			if (hits.length > 0 && hits[0].face.normal.y > 0) {
+				var actualHeight = hits[0].distance - 15;
+				if ((ld31.motion.velocity.y <=0) && Math.abs(actualHeight) < 1.5)
+				{
+					ld31.motion.position.y -= actualHeight -1.2 ;
 					ld31.motion.velocity.y = 0;
 					ld31.motion.airborne = false;
 				}
 			}
+
+			
+
+
 			if (ld31.motion.airborne) {
 				ld31.motion.velocity.y -= gravity;
 			}
 
 			ld31.displacement.copy(ld31.motion.velocity);
+			if (!ld31.motion.airborne) {
+				ld31.motion.velocity.multiplyScalar(damping);
+			}
 
 			ld31.motion.position.add(ld31.displacement)
 
