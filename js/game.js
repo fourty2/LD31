@@ -55,12 +55,13 @@ var ld31 = {
 
 		this.gamecanvas = document.getElementById('gamecanvas');
 		this.renderer = new THREE.WebGLRenderer({canvas: gamecanvas});
+
  			this.renderer.setSize( 800, 600 );
         //document.body.appendChild( this.renderer.domElement );
 		this.renderer.setSize(WIDTH, HEIGHT);
 		this.renderer.shadowMapEnabled = true;
 		this.renderer.shadowMapSoft = true;		
-		this.renderer.setClearColor(0xffffff, 1);
+		this.renderer.setClearColor(0x000510, 1);
 
 		this.scene = new THREE.Scene();
 
@@ -74,15 +75,34 @@ var ld31 = {
 
 	    this.clock = new THREE.Clock();
 
-	    this.scene.fog = new THREE.FogExp2(0xffffff, 0.004);
+	    this.scene.fog = new THREE.FogExp2(0x000510, 0.002);
+
+
+	    // skybox
+	    var textureCube = THREE.ImageUtils.loadTexture('grimmnight_large.jpg', THREE.CubeReflectionMapping);
+	    var shader = THREE.ShaderLib["cube"];
+		var uniforms = THREE.UniformsUtils.clone( shader.uniforms );
+		uniforms['tCube'].value = textureCube;   // textureCube has been init before
+		uniforms['tFlip'].value = 1;
+		var material = new THREE.ShaderMaterial({
+		    fragmentShader    : shader.fragmentShader,
+		    vertexShader  : shader.vertexShader,
+		    uniforms  : uniforms
+		});
+		material = new THREE.MeshBasicMaterial({map: textureCube, side: THREE.BackSide});
+		skyboxMesh    = new THREE.Mesh( new THREE.BoxGeometry( 700, 700, 700, 1, 1, 1, null, true ), material );
+		// add it to the scene
+	//	this.scene.add( skyboxMesh );
 
 
 		//this.scene
-		var light = new THREE.AmbientLight( 0x606060 ); // soft white light
+		var light = new THREE.AmbientLight( 0x303030 ); // soft white light
 		this.scene.add( light );
 
 		window.addEventListener('resize', ld31.onWindowResize, false);
 		document.addEventListener('mousedown', ld31.onMouseDown, false);
+
+		this.initSnow();
 
 		this.initWorld();
 		this.initPlayer();
@@ -102,7 +122,10 @@ var ld31 = {
 	onMouseDown: function(e) {
 		e.preventDefault();
 		ld31.lookAround = true;
-		ld31.cameraControls.center.copy(ld31.player.position);
+		var aboveCam = new THREE.Vector3().copy(ld31.player.position);
+			aboveCam.y += 10;
+
+		ld31.cameraControls.center.copy(aboveCam);
 		document.addEventListener('mouseup', ld31.onMouseUp, false);
 	},
 	onMouseUp: function(e) {
@@ -125,6 +148,66 @@ var ld31 = {
 			e.preventDefault();
 		}
 	},
+	initSnow: function() {
+		texture = THREE.ImageUtils.loadTexture( 'snowflake1.png' );
+		var particleSystemHeight = 200.0;
+		var numParticles = 30000,
+			width = 200,
+			height = particleSystemHeight,
+			depth = 400,
+			parameters = {
+				color: 0xFFFFFF,
+				height: particleSystemHeight,
+				radiusX: 2.5,
+				radiusZ: 2.5,
+				size: 200,
+				scale: 4.0,
+				opacity: 0.4,
+				speedH: 1.0,
+				speedV: 1.0
+			},
+			systemGeometry = new THREE.Geometry(),
+			systemMaterial = new THREE.ShaderMaterial({
+				uniforms: {
+					color:  { type: 'c', value: new THREE.Color( parameters.color ) },
+					height: { type: 'f', value: parameters.height },
+					elapsedTime: { type: 'f', value: 0 },
+					radiusX: { type: 'f', value: parameters.radiusX },
+					radiusZ: { type: 'f', value: parameters.radiusZ },
+					size: { type: 'f', value: parameters.size },
+					scale: { type: 'f', value: parameters.scale },
+					opacity: { type: 'f', value: parameters.opacity },
+					texture: { type: 't', value: texture },
+					speedH: { type: 'f', value: parameters.speedH },
+					speedV: { type: 'f', value: parameters.speedV }
+				},
+				vertexShader: document.getElementById( 'step07_vs' ).textContent,
+				fragmentShader: document.getElementById( 'step09_fs' ).textContent,
+				blending: THREE.AdditiveBlending,
+				transparent: true,
+				depthTest: true
+			});
+	 
+		for( var i = 0; i < numParticles; i++ ) {
+			var vertex = new THREE.Vector3(
+					this.rand( width ),
+					Math.random() * height,
+					this.rand( depth )
+				);
+
+			systemGeometry.vertices.push( vertex );
+		}
+
+		this.particleSystem = new THREE.ParticleSystem( systemGeometry, systemMaterial );
+		this.particleSystem.position.y = -50; //-height/2;
+		this.particleSystem.position.x = -50; //-height/2;
+		this.scene.add( this.particleSystem );
+
+	},
+	rand: function( v ) {
+		return (v * (Math.random() - 0.5));
+	},
+
 	initPlayer: function() {
 		// get keyboard input 
 
@@ -149,8 +232,8 @@ var ld31 = {
 			ld31.scene.add(ld31.player);
 
 
-			// reset position
-			ld31.motion.position.set(-80,15,80);
+			// reset positionaddLaterne(-100, -34, 100);
+			ld31.motion.position.set(-100,-38,100);
 			ld31.motion.velocity.multiplyScalar(0);
 
 
@@ -204,6 +287,7 @@ var ld31 = {
 
 
  		var light = new THREE.DirectionalLight( 0xFFA030 );
+ 		light.intensity = 0.3;
         light.position.set( 160, 20, 50 );
         light.castShadow = true;
         light.shadowCameraNear = 1;
@@ -220,10 +304,66 @@ var ld31 = {
        //light.shadowCameraVisible = true;
 		this.scene.add(light);
 
+		// laternen in die szene setzen
+		loader.load('models/laterne.json', function(geometry, materials) {
+			geometry.center();
+			for (var i = 0; i< materials.length; i++) {
+				materials[i].shading = THREE.FlatShading;
+				//materials[i].side = THREE.DoubleSide;
+			}
 
+
+			var addLaterne = function(x,y,z) {
+				var laterne = new THREE.Mesh(geometry,
+							new THREE.MeshFaceMaterial(materials)
+					);
+				laterne.receiveShadow = true;
+				laterne.castShadow = true;
+				laterne.rotation.y = -Math.PI/2;
+				laterne.position.set(x,y,z);
+				laterne.scale.set(2,2,2);
+				
+				// mal nochn licht setzen
+				var spotLight = new THREE.SpotLight( 0xffffff, 2.0);
+				spotLight.position.set( 0,2,-0.5);
+				spotLight.target.position.set(laterne.position.x + 1, laterne.position.y, laterne.position.z ); // = new THREE.Object3D( -80, -40, 80);
+				spotLight.target.updateMatrixWorld();
+				spotLight.castShadow = true;
+
+				spotLight.shadowMapWidth = 1024;
+				spotLight.shadowMapHeight = 1024;
+
+				spotLight.shadowCameraNear = 1;
+				spotLight.shadowCameraFar = 100;
+				spotLight.shadowCameraFov = 60;
+				laterne.add( spotLight );
+				ld31.scene.add(laterne);				
+				return laterne;
+			}
+
+			addLaterne(-104, -34, 100);
+			addLaterne(-100, -34, 70);
+			addLaterne(-114, -34, 40);
+			var lat2 = addLaterne(-112, -34, 10);
+			lat2.rotation.y = Math.PI/2;
+			addLaterne(-110, -34, -10);
+			addLaterne(-100, -34, -30);
+			var lat = addLaterne(-70, -34, -30);
+			lat.rotation.y = Math.PI/2;
+
+
+
+		});
+
+
+		
+
+
+		
 	},
 	// render stuff
 	render: function() {
+		
 		//this.camera.rotation.x += 0.2;
 		if (ld31.snowman) {
 			//this.camera.lookAt(ld31.snowman.position);
@@ -237,12 +377,16 @@ var ld31 = {
 		//	ld31.camera.lookAt(ld31.player.position);
 			ld31.camera.updateMatrix();
 			ld31.player.position.copy(ld31.motion.position);
-
+elapsedTime = ld31.clock.getElapsedTime();
+	if (ld31.particleSystem) {
+		ld31.particleSystem.material.uniforms.elapsedTime.value = elapsedTime * 10;
+		
+	}
+		
 			/*this.camera.position.x = ld31.player.position.x + 10;
 			this.camera.position.y = ld31.player.position.y + 1;
 			this.camera.position.z = ld31.player.position.z + 30;
-			*/
-			
+			`*/	
 	//		console.log(ld31.motion.position);
 
 			//ld31.updateCamera();
@@ -281,7 +425,7 @@ var ld31 = {
 		}
 
 
-		var relativeCameraOffset = new THREE.Vector3(0, 6, 20);
+		var relativeCameraOffset = new THREE.Vector3(0, 20, 30);
 		// hard version ;)
 //		var relativeCameraOffset = new THREE.Vector3(0, 60, 200);
 
@@ -295,7 +439,10 @@ var ld31 = {
 			.interpolation( TWEEN.Interpolation.Bezier )
 			.easing( TWEEN.Easing.Sinusoidal.InOut ).start();
 
-			ld31.camera.lookAt( ld31.player.position );
+			var aboveCam = new THREE.Vector3().copy(ld31.player.position);
+			aboveCam.y += 10;
+
+			ld31.camera.lookAt( aboveCam );
 		}
 
 		if (ld31.pressed[ld31.keys.LEFT] || ld31.pressed[ld31.keys.A]) {
