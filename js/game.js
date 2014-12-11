@@ -338,18 +338,20 @@ var ld31 = {
 				spotLight.shadowCameraFov = 60;
 				laterne.add( spotLight );
 				ld31.scene.add(laterne);				
-				return laterne;
+				return {'laterne': laterne, 'spotlight': spotLight};
 			}
 
 			addLaterne(-104, -34, 100);
 			addLaterne(-100, -34, 70);
 			addLaterne(-114, -34, 40);
 			var lat2 = addLaterne(-112, -34, 10);
-			lat2.rotation.y = Math.PI/2;
+			lat2.laterne.rotation.y = Math.PI/2;
+			lat2.spotlight.target.position.set(lat2.laterne.position.x - 1, lat2.laterne.position.y, lat2.laterne.position.z );
+			lat2.spotlight.target.updateMatrixWorld();
 			addLaterne(-110, -34, -10);
 			addLaterne(-100, -34, -30);
 			var lat = addLaterne(-70, -34, -30);
-			lat.rotation.y = Math.PI/2;
+			lat.laterne.rotation.y = Math.PI/2;
 
 
 
@@ -410,10 +412,10 @@ elapsedTime = ld31.clock.getElapsedTime();
 
 
 		if (ld31.pressed[ld31.keys.UP] || ld31.pressed[ld31.keys.W]) {
-			forward.multiplyScalar( -0.2 );
+			forward.multiplyScalar( -0.3 );
 		} 
 		else if (ld31.pressed[ld31.keys.DOWN] || ld31.pressed[ld31.keys.S]) {
-			forward.multiplyScalar( 0.2 );
+			forward.multiplyScalar( 0.3 );
 		}
 		else {
 			forward.multiplyScalar( 0 );
@@ -421,7 +423,7 @@ elapsedTime = ld31.clock.getElapsedTime();
 
 		if (ld31.pressed[ld31.keys.SPACE] && !ld31.motion.airborne) {
 			ld31.motion.airborne = true;
-			forward.y = 0.3;
+			forward.y = 0.4;
 		}
 
 
@@ -476,7 +478,7 @@ elapsedTime = ld31.clock.getElapsedTime();
 			ld31.raycaster.ray.origin.copy(ld31.motion.position);
 			ld31.raycaster.ray.origin.y += 15; //birdsEye; // 
 
-			var gravity = 0.01;
+			var gravity = 0.02;
 			var damping = 0.93;
 			var time = 0.3;
 			var hits = ld31.raycaster.intersectObject(ld31.world);
