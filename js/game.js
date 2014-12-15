@@ -223,7 +223,8 @@ var ld31 = {
 
 			ld31.player = new THREE.Mesh(
 				geometry,
-				new THREE.MeshLambertMaterial({color: 0x00ff00, shading: THREE.FlatShading})
+				new THREE.MeshFaceMaterial(materials)
+			//	new THREE.MeshLambertMaterial({color: 0x00ff00, shading: THREE.FlatShading})
 			);
 			//ld31.player.scale.set(2,2,2);
 			ld31.player.castShadow = true;
@@ -356,11 +357,6 @@ var ld31 = {
 
 
 		});
-
-
-		
-
-
 		
 	},
 	// render stuff
@@ -487,9 +483,9 @@ elapsedTime = ld31.clock.getElapsedTime();
 			ld31.motion.airborne = true;
 			if (smhits.length > 0 && smhits[0].face.normal.y > 0) {
 				var actualHeight = smhits[0].distance - 15;
-				if ((ld31.motion.velocity.y <=0) && Math.abs(actualHeight) < 1.5)
+				if ((ld31.motion.velocity.y <=0) && Math.abs(actualHeight) < 2.6)
 				{
-					ld31.motion.position.y -= actualHeight -1.2 ;
+					ld31.motion.position.y -= actualHeight -2.5 ;
 					ld31.motion.velocity.y = 0;
 					ld31.motion.airborne = false;
 				}
@@ -497,9 +493,9 @@ elapsedTime = ld31.clock.getElapsedTime();
 			}
 			if (hits.length > 0 && hits[0].face.normal.y > 0) {
 				var actualHeight = hits[0].distance - 15;
-				if ((ld31.motion.velocity.y <=0) && Math.abs(actualHeight) < 1.5)
+				if ((ld31.motion.velocity.y <=0) && Math.abs(actualHeight) < 2.6)
 				{
-					ld31.motion.position.y -= actualHeight -1.2 ;
+					ld31.motion.position.y -= actualHeight -2.5 ;
 					ld31.motion.velocity.y = 0;
 					ld31.motion.airborne = false;
 				}
