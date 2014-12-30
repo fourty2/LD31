@@ -94,9 +94,9 @@ var ld31 = {
 		this.cameraControls = new ThirdPersonCamera(this.camera);
 
 		this.player = new Player(ld31,this.cameraControls);
-		this.player.init(new THREE.Vector3(-100,-38,100));
+		this.player.init(new THREE.Vector3(0,-20,0));
 		// distanceAway, distanceUp
-		this.cameraControls.init(50,50);
+		this.cameraControls.init(15,1);
 
 		this.initWorld();
 		this.initPhysics();
@@ -137,6 +137,9 @@ var ld31 = {
 			ld31.inputState.pressed[e.keyCode] = false;
 			e.preventDefault();
 		}
+	},
+	debugLine: function(rootposition, vector, color) {
+
 	},
 	initWorld: function() {
 		// ground
