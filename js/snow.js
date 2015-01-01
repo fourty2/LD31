@@ -63,6 +63,12 @@ Snow.prototype = {
 	},
 	rand: function( v ) {
 		return (v * (Math.random() - 0.5));
+	},
+	update: function(elapsedTime) {
+		if (this.particleSystem) {
+				this.particleSystem.material.uniforms.elapsedTime.value = elapsedTime * 10;
+		
+		}
 	}
 
 }

@@ -3,34 +3,62 @@ var Player = function(gameScope, cameraControls) {
 	this.velocity = new THREE.Vector3(0,0,0);
 	this.airborne = false; // in der luft?
 	this.cameraControls = cameraControls;
+	this.animation =  null;
 }
 
 Player.prototype = {
 	init: function(position) {
 		var self = this;
-		this.game.loader.load('models/santa.json', function(geometry, materials) {
-			geometry.center();
+		this.game.loader.load('models/santa2f.json', function(geometry, materials) {
+
+			// ensure loop?
+			animation = geometry.animations[0];
+			for ( var i = 0; i < animation.hierarchy.length; i ++ ) {
+
+					var bone = animation.hierarchy[ i ];
+
+					var first = bone.keys[ 0 ];
+					var last = bone.keys[ bone.keys.length - 1 ];
+
+					last.pos = first.pos;
+					last.rot = first.rot;
+					last.scl = first.scl;
+
+				}
+
+			//geometry.center();
 			for (var i = 0; i< materials.length; i++) {
 				materials[i].shading = THREE.FlatShading;
+			//	materials[i].skinning = true;
 			}
+			var facematerial = new THREE.MeshFaceMaterial(materials);
 
-			self.player = new THREE.Mesh(
+
+			facematerial.skinning = true;
+			self.player = new THREE.SkinnedMesh(
 				geometry,
-				new THREE.MeshFaceMaterial(materials)
+				facematerial
+				
 			//	new THREE.MeshLambertMaterial({color: 0x00ff00, shading: THREE.FlatShading})
 			);
 			//ld31.player.scale.set(2,2,2);
+			self.player.scale.set(0.7,0.7,0.7);
 			self.player.castShadow = true;
 			self.player.receiveShadow = true;
-
+		
 			self.player.position.set(position.x, position.y, position.z);
 			//this.player.add(this.camera);
 			self.cameraControls.setTarget(self.player);
 
+			
+			self.animate();
 			self.game.scene.add(self.player);
 
-
-
+		/*	helper = new THREE.SkeletonHelper( self.player );
+			helper.material.linewidth = 3;
+			helper.visible = true;
+			self.game.scene.add( helper );
+		*/
 			// reset positionaddLaterne(-100, -34, 100);
 			// ld31.motion.position.set(-100,-38,100);
 			// ld31.motion.velocity.multiplyScalar(0);
@@ -39,6 +67,43 @@ Player.prototype = {
 		});
 
 
+	},
+	animate: function() {
+		var self = this;
+		var materials = self.player.material.materials;
+		for (var k in materials) {
+			var mat = self.player.material.materials[k];
+			mat.skinning = true;
+			//materials[k].skinning = true;
+		}
+
+
+
+	//	console.log(materials);
+
+    	  //THREE.AnimationHandler.add( self.player.geometry.animations[0]);
+		self.animation = new THREE.Animation(self.player, self.player.geometry.animations[0]);
+		
+		self.animation.play(0.4);
+		self.animation.loop = false;
+	},
+	update: function(delta) {
+		// THREE.AnimationHandler.update(delta);
+		if (this.animation) {
+			if (this.speed == 0 && this.animation.currentTime >= 0.5 ) {
+				// standing animation
+				this.animation.play(0.4);
+				this.animation.update(delta *30);
+				//this.animation.stop();
+			} else {
+				if (this.animation.currentTime >= 1.9) {
+					//this.animation.stop();
+					this.animation.play(0.4);
+				}
+				this.animation.update(delta *300 * this.speed);
+
+			}
+		}
 	},
 	moveWithInput: function(inputState) {
 		var self = this;
@@ -78,22 +143,24 @@ Player.prototype = {
 		if (pad) {
 			if (!horizontal) {
 				horizontal = pad.leftStickX;
+				if (horizontal < 0.1 && horizontal > -0.1) {
+					horizontal = 0;
+				}
 			}
 			if (!vertical) {
 				vertical = pad.leftStickY;
+				if (vertical < 0.1 && vertical > -0.1) {
+					vertical = 0;
+				}
 			}
 
 		}
 
-
 		speed = new THREE.Vector2(horizontal, vertical);
 		speed = speed.dot(speed);
-		speed = speed * 0.4;
-/*		console.log(vertical);
-		console.log(horizontal);
-		console.log("speed: " + speed);
-		console.log("direction: " + horizontal);
-*/
+		speed = speed * 0.2;
+		self.speed = speed;
+
 		var stickDirection = new THREE.Vector3(horizontal, 0, vertical);
 
 		var targetMatrix = new THREE.Matrix4();
@@ -120,13 +187,10 @@ Player.prototype = {
 		var axisSign = new THREE.Vector3();
 		axisSign.crossVectors(moveDirection, targetDirection);
 
-//		moveDirection.multiplyVectors(referentialShift, targetDirection);
 	
-		
 		var rootAngle = targetDirection.angleTo(moveDirection) * (axisSign.y >= 0 ? -1.0 : 1.0);
-		//rootAngle = rootAngle / 180;
+		rootAngle = rootAngle;
 		if (rootAngle) {
-			console.log("would rotate to " + rootAngle)
 		 self.player.rotateY( rootAngle * 0.2 );
 
 		}
@@ -135,50 +199,14 @@ Player.prototype = {
 
 
 //		var forward = 0.0; //new THREE.Vector3();
-		var delta = self.game.clock.getDelta();
-  		var rotateAngle = Math.PI / 2 * delta; 
-
-//		var sideways = new THREE.Vector3();
-		// calculate x and y steps for current rotation
-
-		//forward.set( Math.sin( self.player.rotation.y ), 0, Math.cos( self.player.rotation.y ) );
-//		sideways.set( forward.z, 0, -forward.x );
-
-	/*	if (inputState.pressed[inputState.keys.UP] || inputState.pressed[inputState.keys.W]) {
-			forward = 0.3;
-		} 
-		else if (inputState.pressed[inputState.keys.DOWN] || inputState.pressed[inputState.keys.S]) {
-			forward = -0.3;
-		}
-		else {
-			forward = 0.0;
-		}
-
+		//var delta = self.game.clock.getDelta();
+  		//var rotateAngle = Math.PI / 2 * delta; 
+  		/*
 		if (inputState.pressed[inputState.keys.SPACE] && !inputState.motion.airborne) {
 			inputState.motion.airborne = true;
 			//forward.y = 0.4;
-		}
+		}*/
 
-	// wir wollen nicht mehr schrittweise rotieren, sondern quasi nach rechts laufen. also rotieren und dann vorwärtsbewegung.
-		if (inputState.pressed[inputState.keys.LEFT] || inputState.pressed[inputState.keys.A]) {
-        	//self.player.rotateY(90);
-        	self.player.translateX(0.3);
-		} 
-		else if (inputState.pressed[inputState.keys.RIGHT] || inputState.pressed[inputState.keys.D]) {
-	       	//self.player.rotateY(-rotateAngle);
-        	self.player.translateX(-0.3);
-
-		}
-
-		self.player.translateZ(forward);
-		*/
-
-		//var relativeCameraOffset = new THREE.Vector3(0, 20, 30);
-		// hard version ;)
-//		var relativeCameraOffset = new THREE.Vector3(0, 60, 200);
-
-		//var cameraOffset = relativeCameraOffset.applyMatrix4(ld31.player.matrixWorld);
-		// Camera TWEEN.
 	/*	if (!ld31.lookAround) {
 			new TWEEN.Tween( ld31.camera.position ).to( {
 			  x: cameraOffset.x,
@@ -194,25 +222,5 @@ Player.prototype = {
 		}
 		*/
 
-	
-
-		
-
-
-
-
-	/*
-		var combined = forward; //.add( sideways );
-		if( Math.abs( combined.x ) >= Math.abs( inputState.motion.velocity.x ) ) inputState.motion.velocity.x = combined.x;
-		if( Math.abs( combined.y ) >= Math.abs( inputState.motion.velocity.y ) ) inputState.motion.velocity.y = combined.y;
-		if( Math.abs( combined.z ) >= Math.abs( inputState.motion.velocity.z ) ) {
-			inputState.motion.velocity.z = combined.z;
-		}
-	
-*/
-
 	}
-
-
 }
-

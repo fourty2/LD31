@@ -31,7 +31,7 @@ ThirdPersonCamera.prototype = {
 		var lookDirection = new THREE.Vector3().subVectors(characterOffset, this.camera.position);
 		lookDirection.y = 0.0;
 		lookDirection.normalize();
-		console.log(lookDirection);
+//		console.log(lookDirection);
 
 		cameraPosition = new THREE.Vector3().addVectors(characterOffset, new THREE.Vector3(0, this.distanceUp, 0));
 		cameraPosition.sub( new THREE.Vector3().multiplyVectors(lookDirection, new THREE.Vector3(this.distanceAway, this.distanceAway, this.distanceAway)));
@@ -50,8 +50,11 @@ ThirdPersonCamera.prototype = {
 		*/
 		
 		this.camera.position.set(cameraPosition.x, cameraPosition.y, cameraPosition.z);
-		
-		this.camera.lookAt(this.target.position);
+		// check 
+		var targetPosition = this.target.position.clone();
+		targetPosition.y += 4;
+
+		this.camera.lookAt(targetPosition);
 		this.camera.updateMatrix();
 		
 		//this.camera.lookAt(this.target.position);

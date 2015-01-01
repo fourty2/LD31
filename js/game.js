@@ -94,9 +94,9 @@ var ld31 = {
 		this.cameraControls = new ThirdPersonCamera(this.camera);
 
 		this.player = new Player(ld31,this.cameraControls);
-		this.player.init(new THREE.Vector3(0,-20,0));
+		this.player.init(new THREE.Vector3(-100,-20,100));
 		// distanceAway, distanceUp
-		this.cameraControls.init(15,1);
+		this.cameraControls.init(15,2);
 
 		this.initWorld();
 		this.initPhysics();
@@ -265,15 +265,13 @@ var ld31 = {
 		if (ld31.player.player) {
 			ld31.player.moveWithInput(ld31.inputState);
 			ld31.applyPhysics();
-
+			ld31.player.update(ld31.clock.getDelta());
 			ld31.cameraControls.update();
 			//ld31.player.position.copy(ld31.motion.position);
+			ld31.snow.update(ld31.clock.getElapsedTime());
 
-			elapsedTime = ld31.clock.getElapsedTime();
-			if (ld31.particleSystem) {
-				ld31.particleSystem.material.uniforms.elapsedTime.value = elapsedTime * 10;
-		
-			}
+			//elapsedTime = ld31.clock.getElapsedTime();
+			
 		}
 
 		this.renderer.render(this.scene, this.camera);
@@ -297,9 +295,9 @@ var ld31 = {
 			ld31.player.airborne = true;
 			if (smhits.length > 0 && smhits[0].face.normal.y > 0) {
 				var actualHeight = smhits[0].distance - 15;
-				if ((ld31.player.velocity.y <=0) && Math.abs(actualHeight) < 2.6)
+				if ((ld31.player.velocity.y <=0) && Math.abs(actualHeight) < 1)
 				{
-					ld31.player.player.position.y -= actualHeight -2.5 ;
+					ld31.player.player.position.y -= actualHeight ;
 					ld31.player.velocity.y = 0;
 					ld31.player.airborne = false;
 				}
@@ -307,16 +305,13 @@ var ld31 = {
 			}
 			if (hits.length > 0 && hits[0].face.normal.y > 0) {
 				var actualHeight = hits[0].distance - 15;
-				if ((ld31.player.velocity.y <=0) && Math.abs(actualHeight) < 2.6)
+				if ((ld31.player.velocity.y <=0) && Math.abs(actualHeight) < 1)
 				{
-					ld31.player.player.position.y -= actualHeight -2.5 ;
+					ld31.player.player.position.y -= actualHeight;
 					ld31.player.velocity.y = 0;
 					ld31.player.airborne = false;
 				}
 			}
-
-			
-
 
 			if (ld31.player.airborne) {
 				ld31.player.velocity.y -= gravity;
@@ -329,11 +324,7 @@ var ld31 = {
 
 			ld31.player.player.position.add(ld31.displacement)
 
-			//ld31.motion.position.y -= 1;
-			//console.log(hits);
-
 		}
-
 
 	},
 	// animate cycle
